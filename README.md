@@ -1,239 +1,239 @@
-# Setting Up Multiple GitHub Accounts on One Laptop
+# Setup Multi-Akun GitHub di Satu Laptop
 
-This guide explains how to configure 2 or more GitHub accounts on a single laptop using SSH, without needing to log in/out in the browser or Git CLI every time you switch projects.
+Panduan ini menjelaskan cara mengonfigurasi 2 atau lebih akun GitHub dalam satu laptop menggunakan SSH tanpa perlu login/logout di browser atau Git CLI setiap kali berpindah project.
 
-This method is useful if you have:
+Metode ini cocok jika kamu memiliki:
 
-- A personal GitHub account
-- An organization / work / campus GitHub account
-- A freelance project GitHub account
+- Akun GitHub pribadi
+- Akun GitHub organisasi / tempat kerja / kampus
+- Akun GitHub project freelance
 
-## 1. How It Works
+## 1. Gambaran Cara Kerja
 
-Let's say we have two accounts:
+Misalkan kita memiliki dua akun:
 
-| Account      | Purpose                | Example Username   |
-| ------------ | ---------------------- | ------------------ |
-| Work Account | Organization / Company | `work-account`     |
-| Main Account | Personal               | `personal-account` |
+| Akun       | Kegunaan                | Contoh Username |
+| ---------- | ----------------------- | --------------- |
+| Akun Kerja | Organisasi / Perusahaan | `akun-kerja`    |
+| Akun Utama | Pribadi                 | `akun-pribadi`  |
 
-We'll create a separate SSH key for each account, then register an SSH host alias so Git knows which key to use.
+Kita akan membuat SSH Key terpisah untuk masing-masing akun, lalu mendaftarkan SSH Host Alias agar Git tahu kunci mana yang harus dipakai.
 
 ```
 Laptop
-├── SSH Key: id_ed25519_work     ──► GitHub: work-account     (Host: github-work)
-└── SSH Key: id_ed25519_personal ──► GitHub: personal-account (Host: github-personal)
+├── SSH Key: id_ed25519_kerja   ──► GitHub: akun-kerja   (Host: github-kerja)
+└── SSH Key: id_ed25519_pribadi ──► GitHub: akun-pribadi (Host: github-pribadi)
 ```
 
-Example SSH remote URLs:
+Contoh SSH Remote URL:
 
-- `git@github-work:work-account/work-project.git` → Uses the work key
-- `git@github-personal:personal-account/portfolio.git` → Uses the personal key
+- `git@github-kerja:akun-kerja/project-kantor.git` → Memakai kunci kerja
+- `git@github-pribadi:akun-pribadi/portfolio.git` → Memakai kunci pribadi
 
-## 2. Separating Authentication from Commit Identity
+## 2. Pemisahan Autentikasi vs Identitas Commit
 
-Understand these two important concepts:
+Pahami dua konsep penting ini:
 
-- **SSH Key & Remote URL**: Determines authentication access rights to the GitHub repository (who can push/pull).
-- **Git Config (`user.name` & `user.email`)**: Determines the commit author identity recorded in the Git history.
+- **SSH Key & Remote URL**: Menentukan hak akses autentikasi ke repository GitHub (siapa yang push/pull).
+- **Git Config (`user.name` & `user.email`)**: Menentukan identitas pembuat commit yang tercatat di riwayat Git.
 
-> ⚠️ Setting up Account A's SSH key does NOT automatically change your commit `user.email` to Account A. Both need to be configured separately.
+> ⚠️ Memasang SSH key milik Akun A tidak otomatis mengubah `user.email` commit kamu menjadi Akun A. Keduanya harus disesuaikan.
 
-## 3. Check Full Prerequisites
+## 3. Cek Prasyarat Lengkap
 
-Open Git Bash, then check your Git installation and the existence of the SSH folder:
+Buka Git Bash, lalu cek instalasi Git dan keberadaan folder SSH:
 
 ```bash
 git --version
 ls ~/.ssh
 ```
 
-(If `ls ~/.ssh` shows a "folder not found" error, the folder will be created automatically in the next step.)
+(Jika `ls ~/.ssh` menampilkan error folder tidak ditemukan, folder akan otomatis dibuat pada langkah berikutnya.)
 
-## 4. Create an SSH Key for the Work Account
+## 4. Buat SSH Key untuk Akun Kerja
 
-> ⚠️ **IMPORTANT (Windows / Git Bash specific)**: Don't manually type `~/.ssh/...` inside the interactive `ssh-keygen` prompt, since the tilde (`~`) isn't evaluated by the prompt and will cause an error. Use the `-f` flag directly in the command instead.
+> ⚠️ **PENTING (Khusus Windows / Git Bash)**: Jangan mengetik `~/.ssh/...` secara manual di dalam prompt interaktif `ssh-keygen` karena tilde (`~`) tidak dievaluasi oleh prompt dan akan menyebabkan error. Gunakan flag `-f` langsung di perintah.
 
-Run this one-line command:
-
-```bash
-ssh-keygen -t ed25519 -C "work-email@example.com" -f ~/.ssh/id_ed25519_work
-```
-
-Press Enter if you don't want to use a passphrase (or enter one for extra security).
-
-The key is created at `~/.ssh/id_ed25519_work`.
-
-## 5. Create an SSH Key for the Personal Account
-
-Run the following command:
+Jalankan perintah satu baris ini:
 
 ```bash
-ssh-keygen -t ed25519 -C "personal-email@example.com" -f ~/.ssh/id_ed25519_personal
+ssh-keygen -t ed25519 -C "email-kerja@example.com" -f ~/.ssh/id_ed25519_kerja
 ```
 
-## 6. Verify the Key Files
+Tekan Enter jika tidak ingin memakai passphrase (atau masukkan passphrase untuk keamanan ekstra).
 
-Check whether the key files were created:
+Kunci berhasil dibuat di `~/.ssh/id_ed25519_kerja`.
+
+## 5. Buat SSH Key untuk Akun Pribadi
+
+Jalankan perintah berikut:
+
+```bash
+ssh-keygen -t ed25519 -C "email-pribadi@example.com" -f ~/.ssh/id_ed25519_pribadi
+```
+
+## 6. Verifikasi Berkas Kunci
+
+Cek apakah berkas kunci sudah terbentuk:
 
 ```bash
 ls ~/.ssh
 ```
 
-Make sure at least the following files exist:
+Pastikan minimal terdapat berkas berikut:
 
-- `id_ed25519_work` (Private Key)
-- `id_ed25519_work.pub` (Public Key)
-- `id_ed25519_personal` (Private Key)
-- `id_ed25519_personal.pub` (Public Key)
+- `id_ed25519_kerja` (Private Key)
+- `id_ed25519_kerja.pub` (Public Key)
+- `id_ed25519_pribadi` (Private Key)
+- `id_ed25519_pribadi.pub` (Public Key)
 
-## 7. Create an SSH Config File (`~/.ssh/config`)
+## 7. Buat Konfigurasi SSH (`~/.ssh/config`)
 
-Create and open the SSH config file:
+Buat dan buka file konfigurasi SSH:
 
 ```bash
 touch ~/.ssh/config
 nano ~/.ssh/config
 ```
 
-Paste in the following configuration:
+Paste konfigurasi berikut:
 
 ```
 # ==============================
-# GitHub - Work Account
+# GitHub - Akun Kerja
 # ==============================
-Host github-work
+Host github-kerja
     HostName github.com
     User git
-    IdentityFile ~/.ssh/id_ed25519_work
+    IdentityFile ~/.ssh/id_ed25519_kerja
     IdentitiesOnly yes
 
 # ==============================
-# GitHub - Personal Account
+# GitHub - Akun Pribadi
 # ==============================
-Host github-personal
+Host github-pribadi
     HostName github.com
     User git
-    IdentityFile ~/.ssh/id_ed25519_personal
+    IdentityFile ~/.ssh/id_ed25519_pribadi
     IdentitiesOnly yes
 ```
 
-**How to save in Nano:**
-Press `Ctrl + X` → Type `Y` → Press `Enter`.
+**Cara Simpan di Nano:**
+Tekan `Ctrl + X` → Ketik `Y` → Tekan `Enter`.
 
-Set stricter permissions on the config file for security:
+Atur izin akses file config agar lebih aman:
 
 ```bash
 chmod 600 ~/.ssh/config
 ```
 
-## 8. Add the Public Key to Each GitHub Account
+## 8. Tambahkan Public Key ke Masing-Masing Akun GitHub
 
-### A. Work Account
+### A. Akun Kerja
 
-Display and copy the public key content:
-
-```bash
-cat ~/.ssh/id_ed25519_work.pub
-```
-
-Open GitHub (log in to the work account) → **Settings** → **SSH and GPG keys** → **New SSH key**.
-
-Give it a title (e.g. `Laptop - Work`), paste the key into the Key field, then click **Add SSH key**.
-
-### B. Personal Account
-
-Display and copy the public key content:
+Tampilkan dan salin isi public key:
 
 ```bash
-cat ~/.ssh/id_ed25519_personal.pub
+cat ~/.ssh/id_ed25519_kerja.pub
 ```
 
-Open GitHub (log in to the personal account) → **Settings** → **SSH and GPG keys** → **New SSH key**.
+Buka GitHub (Login akun kerja) → **Settings** → **SSH and GPG keys** → **New SSH key**.
 
-Give it a title (e.g. `Laptop - Personal`), paste the key into the Key field, then click **Add SSH key**.
+Beri Judul (misal: `Laptop - Kerja`), tempel kunci ke kolom Key, lalu klik **Add SSH key**.
 
-## 9. Test the SSH Connection
+### B. Akun Pribadi
 
-Run the following test commands in Git Bash:
+Tampilkan dan salin isi public key:
 
 ```bash
-ssh -T github-work
+cat ~/.ssh/id_ed25519_pribadi.pub
 ```
 
-Success message: `Hi <work-username>! You've successfully authenticated...`
+Buka GitHub (Login akun pribadi) → **Settings** → **SSH and GPG keys** → **New SSH key**.
+
+Beri Judul (misal: `Laptop - Pribadi`), tempel kunci ke kolom Key, lalu klik **Add SSH key**.
+
+## 9. Uji Koneksi SSH
+
+Jalankan perintah tes berikut di Git Bash:
 
 ```bash
-ssh -T github-personal
+ssh -T github-kerja
 ```
 
-Success message: `Hi <personal-username>! You've successfully authenticated...`
-
-## 10. How to Use in Projects (Workflow)
-
-### A. Cloning a New Repository
-
-Use the host alias (`github-work` or `github-personal`), not the regular `github.com` or HTTPS.
+Hasil sukses: `Hi <username-kerja>! You've successfully authenticated...`
 
 ```bash
-# Clone a work repo
-git clone git@github-work:work-account/work-project.git
-
-# Clone a personal repo
-git clone git@github-personal:personal-account/portfolio.git
+ssh -T github-pribadi
 ```
 
-### B. Updating an Existing Repository
+Hasil sukses: `Hi <username-pribadi>! You've successfully authenticated...`
 
-If a repo was already cloned via regular HTTPS/SSH, update its remote URL:
+## 10. Cara Menggunakan di Project (Workflow)
+
+### A. Memclone Repository Baru
+
+Gunakan Host Alias (`github-kerja` atau `github-pribadi`), bukan `github.com` biasa atau HTTPS.
 
 ```bash
-# In the Work project folder:
-git remote set-url origin git@github-work:work-account/work-project.git
+# Clone Repo Kerja
+git clone git@github-kerja:akun-kerja/project-kantor.git
 
-# In the Personal project folder:
-git remote set-url origin git@github-personal:personal-account/portfolio.git
+# Clone Repo Pribadi
+git clone git@github-pribadi:akun-pribadi/portfolio.git
 ```
 
-## 11. Setting Commit Identity (`user.name` & `user.email`)
+### B. Mengubah Repository yang Sudah Ada
 
-Go into each project's folder and run `git config --local` so commits are recorded under the correct email.
-
-**For the Work project:**
+Jika repo sudah di-clone sebelumnya via HTTPS/SSH biasa, ubah remote URL-nya:
 
 ```bash
-cd path/to/work-project
-git config user.name "Work Full Name"
-git config user.email "work-email@example.com"
+# Di folder project Kerja:
+git remote set-url origin git@github-kerja:akun-kerja/project-kantor.git
+
+# Di folder project Pribadi:
+git remote set-url origin git@github-pribadi:akun-pribadi/portfolio.git
 ```
 
-**For the Personal project:**
+## 11. Mengatur Identitas Commit (`user.name` & `user.email`)
+
+Masuk ke folder masing-masing project dan jalankan `git config --local` agar commit tercatat atas nama email yang sesuai.
+
+**Untuk Project Kerja:**
+
+```bash
+cd path/to/project-kantor
+git config user.name "Nama Lengkap Kerja"
+git config user.email "email-kerja@example.com"
+```
+
+**Untuk Project Pribadi:**
 
 ```bash
 cd path/to/portfolio
-git config user.name "Personal Full Name"
-git config user.email "personal-email@example.com"
+git config user.name "Nama Lengkap Pribadi"
+git config user.email "email-pribadi@example.com"
 ```
 
-## 12. Checklist Before `git push`
+## 12. Checklist Sebelum `git push`
 
-Use these commands to make sure your local repository's configuration is correct:
+Gunakan perintah ini untuk memastikan konfigurasi pada repository lokal sudah benar:
 
 ```bash
-# 1. Check the remote URL (push/pull authentication)
+# 1. Cek Remote URL (Autentikasi Push/Pull)
 git remote -v
 
-# 2. Check the local commit identity
+# 2. Cek Identitas Commit Lokal
 git config user.name
 git config user.email
 ```
 
-## Quick Command Reference
+## Ringkasan Perintah Penting
 
-| Action              | Command                                                            |
-| ------------------- | ------------------------------------------------------------------ |
-| Check SSH keys      | `ls ~/.ssh`                                                        |
-| Test SSH connection | `ssh -T github-work`                                               |
-| Check remote repo   | `git remote -v`                                                    |
-| Set remote repo     | `git remote set-url origin git@<HOST_ALIAS>:<USERNAME>/<REPO>.git` |
-| Set local email     | `git config user.email "email@example.com"`                        |
+| Aksi            | Perintah                                                           |
+| --------------- | ------------------------------------------------------------------ |
+| Cek SSH Key     | `ls ~/.ssh`                                                        |
+| Tes Koneksi SSH | `ssh -T github-kerja`                                              |
+| Cek Remote Repo | `git remote -v`                                                    |
+| Set Remote Repo | `git remote set-url origin git@<HOST_ALIAS>:<USERNAME>/<REPO>.git` |
+| Set Email Lokal | `git config user.email "email@example.com"`                        |
